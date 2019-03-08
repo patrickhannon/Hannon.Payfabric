@@ -4,8 +4,7 @@ using System.Configuration;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Core.Services;
-using Core.Services.Impl;
+using System.Diagnostics;
 
 namespace Hannon.PayFabric
 {
@@ -28,7 +27,9 @@ namespace Hannon.PayFabric
         {
             _transaction = new PayfabricTransaction(_payfabricDeviceId,
                 _payfabricDevicePassword, _payfabricDeviceUrl);
-            _transaction.TestTokenCreate();
+            var response = _transaction.CreateSecurityToken();
+
+            Debug.WriteLine(response.StatusCode);
         }
     }
 }

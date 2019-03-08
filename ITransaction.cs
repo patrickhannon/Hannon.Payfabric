@@ -19,7 +19,7 @@ namespace Hannon.PayFabric
         ResponseModel GetCardsByCustomer(TransactionModel model);
         ResponseModel GetCardByCustomerWallet(TransactionModel model);
         void TestTransaction();
-        void TestTokenCreate();
+        string TokenCreate();
 
         ResponseMessage GetPayfabricTransactionLog(string documentAmount, string shipToLine1);
     }

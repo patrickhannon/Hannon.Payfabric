@@ -35,13 +35,23 @@ namespace Hannon.PayFabric
             //System.Net.ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12;
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             _serializer = new JavaScriptSerializer();
-          
+
+            //var url = "https://sandbox.payfabric.com";
+            //todo update commands to support both sandbox and prod urls
+            _payFabricCommands.Add(Command.CreateToken, new TransactionCommand()
+            {
+                HttpVerb = Method.GET,
+                Url = string.Format("{0}/Payment/Web", url),
+                Name = "CreateToken",
+            });
+            /*
             _payFabricCommands.Add(Command.CreateToken, new TransactionCommand()
             {
                 HttpVerb = Method.GET,
                 Url = string.Format("{0}/payment/api/token/create", url),
                 Name = "CreateToken",
             });
+            */
             _payFabricCommands.Add(Command.CreateTrans, new TransactionCommand()
             {
                 HttpVerb = Method.POST,
@@ -184,6 +194,8 @@ namespace Hannon.PayFabric
                 var success = false;
                 TransactionCommand command;
                 _payFabricCommands.TryGetValue(Command.CreateToken, out command);
+                var url = "https://sandbox.payfabric.com/Payment/Web";
+                
                 var client = new RestClient(command.Url);
                 var request = new RestRequest(command.HttpVerb);
                 request.AddHeader("authorization", _auth);
@@ -192,7 +204,8 @@ namespace Hannon.PayFabric
                 if (Helpers.ResponseStatus(response.StatusCode))
                 {
                     success = true;
-                    responseValue = GetResult(keyResponse);
+                    responseValue.StatusCode = response.StatusCode.ToString();
+                    //responseValue = GetResult(keyResponse);
                 }
                 else
                 {
@@ -240,7 +253,6 @@ namespace Hannon.PayFabric
             var keyResponse = string.Empty;
             try
             {
-                //_logger.Log(LogLevel.Info, "Processing Transaction | " + model.ToString());
                 _payFabricCommands.TryGetValue(Command.CreateTrans, out command);
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                 var client = new RestClient(command.Url);
@@ -257,8 +269,6 @@ namespace Hannon.PayFabric
             }
             catch (Exception ex)
             {
-                //_logger.Log(LogLevel.Error, response.Content);
-                //_logger.Log(LogLevel.Error, ex, ex.StackTrace);
                 throw new Exception(response.Content, ex);
             }
             if (Helpers.ResponseStatus(response.StatusCode))
@@ -552,18 +562,16 @@ namespace Hannon.PayFabric
             }
         }
 
-        public void TestTokenCreate()
+        public string TokenCreate()
         {
+            var result = string.Empty;
             try
             {
                 // Replace url when going live
                 //https://www.payfabric.com/
                 //var url = "https://www.payfabric.com/payment/api/token/create";
-                //var url = "https://sandbox.payfabric.com/payment/api/token/create";
                 var url = "https://sandbox.payfabric.com/Payment/Web";
-                //var url = "https://sandbox.payfabric.com/payment/api/token/create";
-                //https://sandbox.payfabric.com/V3/PayFabric/rest/payment/api/token/create
-                //var url = "https://sandbox.payfabric.com/payment/api/token/create";
+                
                 HttpWebRequest httpWebRequest = WebRequest.Create(url) as HttpWebRequest;
                 httpWebRequest.ContentType = "application/json; charset=utf-8";
                 httpWebRequest.Method = "GET";
@@ -575,13 +583,13 @@ namespace Hannon.PayFabric
                 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                 Stream responseStream = httpWebResponse.GetResponseStream();
                 StreamReader streamReader = new StreamReader(responseStream);
-                string result = streamReader.ReadToEnd();
+                result = streamReader.ReadToEnd();
                 streamReader.Close();
                 responseStream.Close();
                 httpWebRequest.Abort();
                 httpWebResponse.Close();
 
-                // Parse JSON response
+                //Parse JSON response
                 //TokenResponse obj = JsonHelper.JsonDeserialize<TokenResponse>(result);
                 //return obj.Token;
             }
@@ -590,6 +598,7 @@ namespace Hannon.PayFabric
                 Console.WriteLine(e);
                 throw;
             }
+            return result;
         }
 
         public ResponseMessage GetPayfabricTransactionLog(string documentAmount, string shipToLine1)
